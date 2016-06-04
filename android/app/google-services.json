@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "589567077198",
+    "project_id": "archaeology-app-3373f"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589567077198:android:fbd9f515423f325e",
+        "android_client_info": {
+          "package_name": "codelanka.archaeologyapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "589567077198-mg7d6fl2i1q9sf33g98unihsboeldnfm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "codelanka.archaeologyapp",
+            "certificate_hash": "602E9A34400747F33146D9068237B62EA7F2B223"
+          }
+        },
+        {
+          "client_id": "589567077198-130f2cgeua87ecgf38ii7ot15l7r4rv1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTjdDprX768RwdZLhTNnO1PVV1m1OsPI0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

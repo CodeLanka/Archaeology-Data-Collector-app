@@ -1,0 +1,252 @@
+package codelanka.archaeologyapp;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, View.OnClickListener, TextWatcher, OnMapReadyCallback {
+
+    private TextView mTxtDisplayName;
+    private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
+    private EditText mEditGnDivision, mEditNearestTown, mEditLatitude, mEditLongitude;
+    private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
+    private Button mBtnSubmit;
+    private Spinner mSpinnerCategory;
+    private GoogleApiClient mGoogleApiClient;
+    private SharedPreferences mPreferences;
+    private GoogleMap mMap;
+    private String mDisplayName, mIdToken;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mPreferences = getSharedPreferences(LoginActivity.SHARED_PREFS_TAG, MODE_PRIVATE);
+        mIdToken = mPreferences.getString(LoginActivity.SHARED_PREFS_VAL_TOKEN, null);
+        mDisplayName = mPreferences.getString(LoginActivity.SHARED_PREFS_VAL_NAME, null);
+        if (mIdToken == null || TextUtils.isEmpty(mIdToken))
+            finish();
+
+        mTxtDisplayName = (TextView) findViewById(R.id.txt_name);
+        mEditSiteName = (EditText) findViewById(R.id.edit_site_name);
+        mEditProvince = (EditText) findViewById(R.id.edit_province);
+        mEditDistrict = (EditText) findViewById(R.id.edit_district);
+        mEditDsDivision = (EditText) findViewById(R.id.edit_ds_division);
+        mEditGnDivision = (EditText) findViewById(R.id.edit_gn_division);
+        mEditNearestTown = (EditText) findViewById(R.id.edit_nearest_town);
+        mEditLatitude = (EditText) findViewById(R.id.edit_latitude);
+        mEditLongitude = (EditText) findViewById(R.id.edit_longitude);
+        mEditNameOfOwner = (EditText) findViewById(R.id.edit_name_of_owner);
+        mEditNameOfUser = (EditText) findViewById(R.id.edit_name_of_user);
+        mEditDescription = (EditText) findViewById(R.id.edit_description);
+        mSpinnerCategory = (Spinner) findViewById(R.id.spinner_category);
+        mBtnSubmit = (Button) findViewById(R.id.btn_submit);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+        mBtnSubmit.setOnClickListener(this);
+        mEditLatitude.addTextChangedListener(this);
+        mEditLongitude.addTextChangedListener(this);
+
+        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(
+                GoogleSignInOptions.DEFAULT_SIGN_IN
+        ).requestEmail().requestId().build();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this)
+                .addConnectionCallbacks(this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, signInOptions)
+                .build();
+
+        mTxtDisplayName.setText(mDisplayName);
+
+        // populate spinner
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.categories, android.R.layout.simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinnerCategory.setAdapter(adapter);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_logout:
+                logout();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void logout() {
+        if (mGoogleApiClient.isConnected()) {
+            Log.d("style", "logging out");
+            Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(@NonNull Status status) {
+                    Log.d("style", "status: " + status.getStatusMessage());
+                }
+            });
+            mGoogleApiClient.disconnect();
+            resetSharedPrefs();
+            launchLogin();
+        }
+    }
+
+    private void resetSharedPrefs() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(LoginActivity.SHARED_PREFS_VAL_TOKEN, null);
+        editor.putString(LoginActivity.SHARED_PREFS_VAL_NAME, null);
+        editor.apply();
+    }
+
+    private void launchLogin() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_submit:
+                try {
+                    new Uploader().execute(getJSONObject());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
+    }
+
+    private JSONObject getJSONObject() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id_token", mIdToken);
+        jsonObject.put("display_name", mTxtDisplayName.getText().toString().trim());
+        jsonObject.put("site_name", mEditSiteName.getText().toString().trim());
+        jsonObject.put("category", mSpinnerCategory.getSelectedItem().toString().trim());
+        jsonObject.put("province", mEditProvince.getText().toString().trim());
+        jsonObject.put("district", mEditDistrict.getText().toString().trim());
+        jsonObject.put("ds_division", mEditDsDivision.getText().toString().trim());
+        jsonObject.put("gn_division", mEditGnDivision.getText().toString().trim());
+        jsonObject.put("nearest_town", mEditNearestTown.getText().toString().trim());
+        jsonObject.put("latitude", mEditLatitude.getText().toString().trim());
+        jsonObject.put("longitude", mEditLongitude.getText().toString().trim());
+        jsonObject.put("name_of_owner", mEditNameOfOwner.getText().toString().trim());
+        jsonObject.put("name_of_user", mEditNameOfUser.getText().toString().trim());
+        jsonObject.put("description", mEditDescription.getText().toString().trim());
+
+        return jsonObject;
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        if (mMap == null | mEditLatitude.getText() == null || mEditLongitude.getText() == null)
+            return;
+
+        // check if empty
+        if (TextUtils.isEmpty(mEditLatitude.getText()) || TextUtils.isEmpty(mEditLongitude.getText()))
+            return;
+
+        float latitude = Float.valueOf(mEditLatitude.getText().toString().trim());
+        float longitude = Float.valueOf(mEditLongitude.getText().toString().trim());
+        Log.d("arch", "latitude: " + latitude + " longitude: " + longitude);
+        // check range
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
+            return;
+
+        // show position on map
+        final LatLng position = new LatLng(latitude, longitude);
+        mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(position));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(14  ));
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        Log.d("arch", "got a map");
+    }
+}

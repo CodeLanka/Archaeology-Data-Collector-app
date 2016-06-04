@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">Archaeology App</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_button_label">Login</string>
+    
+    <string name="form_name">Logged in as</string>
+    <string name="form_logout">Logout</string>
+    <string name="form_category">Category</string>
+    <string name="form_submit_button">Submit</string>
+    <string name="form_site_name">Site name</string>
+    <string name="form_province">Province</string>
+    <string name="form_district">District</string>
+    <string name="form_ds_division">DS Division</string>
+    <string name="form_gn_division">GN Division</string>
+    <string name="form_nearest_town">Nearest Town</string>
+    <string name="form_where_are_you">Where are you located?</string>
+    <string name="form_site_condition">Site Condition (Good or Bad)</string>
+    <string name="form_latitude">Latitude</string>
+    <string name="form_longitude">Longitude</string>
+    <string name="form_name_of_owner">Name of Owner</string>
+    <string name="form_name_of_user">Name of User</string>
+    <string name="form_description">Description</string>
+
+    <string name="menu_logout">Logout</string>
+
+    <string name="server_client_id">589567077198-130f2cgeua87ecgf38ii7ot15l7r4rv1.apps.googleusercontent.com</string>
+    
+    <string-array name="categories">
+        <item>Ancient Monastery</item>
+        <item>Ancient Port</item>
+        <item>Museum (Ancient House)</item>
+        <item>Mosque</item>
+        <item>Option 5</item>
+        <item>School</item>
+        <item>Valavu (Ancient House)</item>
+        <item>Devalaya</item>
+        <item>Well</item>
+        <item>Church</item>
+        <item>Ancient Building</item>
+    </string-array>
+</resources>
