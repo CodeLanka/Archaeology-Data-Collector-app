@@ -3,7 +3,7 @@ script: ./android/gradlew build assembleRelease
 android:
   components:
   - build-tools-20.0.0
-  - android-19
+  - android-23
 
 deploy:
   - provider: releases
