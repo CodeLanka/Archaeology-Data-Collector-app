@@ -1,0 +1,16 @@
+language: android
+script: ./android/gradlew build assembleRelease
+android:
+  components:
+  - build-tools-20.0.0
+  - android-19
+
+deploy:
+  - provider: releases
+    api_key:
+      $GITHUB_API_KEY
+    file: app/build/outputs/apk/app-release.apk
+    on:
+      repo: CodeLanka/Archaeology-Data-Collector-app
+      tags: true
+
