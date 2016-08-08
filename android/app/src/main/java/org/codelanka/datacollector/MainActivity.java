@@ -1,4 +1,4 @@
-package codelanka.archaeologyapp;
+package org.codelanka.datacollector;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,7 +10,6 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -29,11 +28,12 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,20 +47,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private Button mBtnSubmit;
     private Spinner mSpinnerCategory;
     private GoogleApiClient mGoogleApiClient;
-    private SharedPreferences mPreferences;
     private GoogleMap mMap;
-    private String mDisplayName, mIdToken;
+    private String mDisplayName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPreferences = getSharedPreferences(LoginActivity.SHARED_PREFS_TAG, MODE_PRIVATE);
-        mIdToken = mPreferences.getString(LoginActivity.SHARED_PREFS_VAL_TOKEN, null);
-        mDisplayName = mPreferences.getString(LoginActivity.SHARED_PREFS_VAL_NAME, null);
-        if (mIdToken == null || TextUtils.isEmpty(mIdToken))
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() == null) {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
+        }
+        FirebaseUser user = auth.getCurrentUser();
+        mDisplayName = user.getDisplayName();
 
         mTxtDisplayName = (TextView) findViewById(R.id.txt_name);
         mEditSiteName = (EditText) findViewById(R.id.edit_site_name);
@@ -122,29 +123,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     private void logout() {
-        if (mGoogleApiClient.isConnected()) {
-            Log.d("style", "logging out");
-            Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
-                @Override
-                public void onResult(@NonNull Status status) {
-                    Log.d("style", "status: " + status.getStatusMessage());
-                }
-            });
-            mGoogleApiClient.disconnect();
-            resetSharedPrefs();
-            launchLogin();
-        }
-    }
-
-    private void resetSharedPrefs() {
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString(LoginActivity.SHARED_PREFS_VAL_TOKEN, null);
-        editor.putString(LoginActivity.SHARED_PREFS_VAL_NAME, null);
-        editor.apply();
-    }
-
-    private void launchLogin() {
-        startActivity(new Intent(this, LoginActivity.class));
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(MainActivity.this, LoginActivity.class));
         finish();
     }
 
@@ -192,7 +172,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     private JSONObject getJSONObject() throws JSONException {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id_token", mIdToken);
         jsonObject.put("display_name", mTxtDisplayName.getText().toString().trim());
         jsonObject.put("site_name", mEditSiteName.getText().toString().trim());
         jsonObject.put("category", mSpinnerCategory.getSelectedItem().toString().trim());

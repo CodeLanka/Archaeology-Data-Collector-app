@@ -1,4 +1,4 @@
-package codelanka.archaeologyapp;
+package org.codelanka.datacollector;
 
 import android.os.AsyncTask;
 import android.util.Log;

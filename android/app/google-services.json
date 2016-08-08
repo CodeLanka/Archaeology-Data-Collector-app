@@ -1,33 +1,27 @@
 {
   "project_info": {
-    "project_number": "589567077198",
-    "project_id": "archaeology-app-3373f"
+    "project_number": "130645662887",
+    "firebase_url": "https://archeology-31e31.firebaseio.com",
+    "project_id": "archeology-31e31",
+    "storage_bucket": "archeology-31e31.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:589567077198:android:fbd9f515423f325e",
+        "mobilesdk_app_id": "1:130645662887:android:7ddab829c5e1006f",
         "android_client_info": {
-          "package_name": "codelanka.archaeologyapp"
+          "package_name": "org.codelanka.datacollector"
         }
       },
       "oauth_client": [
         {
-          "client_id": "589567077198-mg7d6fl2i1q9sf33g98unihsboeldnfm.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "codelanka.archaeologyapp",
-            "certificate_hash": "602E9A34400747F33146D9068237B62EA7F2B223"
-          }
-        },
-        {
-          "client_id": "589567077198-130f2cgeua87ecgf38ii7ot15l7r4rv1.apps.googleusercontent.com",
+          "client_id": "130645662887-tofaca6rde18bkiuvd1egtuc3gpdtumc.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCTjdDprX768RwdZLhTNnO1PVV1m1OsPI0"
+          "current_key": "AIzaSyChDHMJiWmtBLiRSV_1V0h_M5TaFCD2uRk"
         }
       ],
       "services": {
@@ -39,7 +33,7 @@
           "other_platform_oauth_client": []
         },
         "ads_service": {
-          "status": 1
+          "status": 2
         }
       }
     }

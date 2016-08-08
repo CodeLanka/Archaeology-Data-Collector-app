@@ -1,4 +1,4 @@
-package codelanka.archaeologyapp;
+package org.codelanka.datacollector;
 
 /**
  * Holder for data entered into the main activity form
