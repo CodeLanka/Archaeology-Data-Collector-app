@@ -2,7 +2,7 @@ language: android
 script: gradlew build assembleRelease
 android:
   components:
-  - build-tools-20.0.0
+  - build-tools-24.0.1
   - android-23
 
 deploy:
