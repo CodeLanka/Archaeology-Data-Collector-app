@@ -1,5 +1,5 @@
 language: android
-script: cd ./android && ./gradlew build assembleRelease --stacktrace
+script: cd ./android && ./gradlew build
 android:
   components:
   - build-tools-24.0.1
