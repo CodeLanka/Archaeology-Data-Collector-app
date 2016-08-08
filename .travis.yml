@@ -1,5 +1,5 @@
 language: android
-script: gradlew build assembleRelease
+script: ./android/gradlew build assembleRelease
 android:
   components:
   - build-tools-24.0.1
