@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -40,6 +41,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
     private Button mBtnSubmit;
     private Spinner mSpinnerCategory;
+    private FirebaseUser mUser;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private GoogleMap mMap;
@@ -69,8 +73,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
         }
-        FirebaseUser user = auth.getCurrentUser();
-        mDisplayName = user.getDisplayName();
+        mUser = auth.getCurrentUser();
+        mDisplayName = mUser.getDisplayName();
 
         mTxtDisplayName = (TextView) findViewById(R.id.txt_name);
         mEditSiteName = (EditText) findViewById(R.id.edit_site_name);
@@ -209,13 +213,41 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_submit:
-                try {
-                    new Uploader().execute(getJSONObject());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                writeNewValues();
                 break;
         }
+    }
+
+    private void writeNewValues() {
+        // Save to firebase db
+        String username = mUser.getDisplayName();
+        String email = mUser.getEmail();
+        String siteName = mEditSiteName.getText().toString();
+        String category = mSpinnerCategory.getSelectedItem().toString();
+        String province = mEditProvince.getText().toString();
+        String district = mEditDistrict.getText().toString();
+        String dsDivision = mEditDsDivision.getText().toString();
+        String gnDivision = mEditGnDivision.getText().toString();
+        String nearestTown = mEditNearestTown.getText().toString();
+        double lat = mLastLocation.getLatitude();
+        double lng = mLastLocation.getLongitude();
+        String nameOfOwner = mEditNameOfOwner.getText().toString();
+        String nameOfUser = mEditNameOfUser.getText().toString();
+        String description = mEditDescription.getText().toString();
+
+        /**
+         * TODO
+         * Input validation
+         */
+
+        DatabaseModel dbModel = new DatabaseModel(
+                username, email, siteName, category, province, district, dsDivision, gnDivision,
+                nearestTown, lat, lng, nameOfOwner, nameOfUser, description
+        );
+        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference().push();
+        mDatabase.setValue(dbModel);
+
+        Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
     }
 
     private JSONObject getJSONObject() throws JSONException {
