@@ -3,7 +3,7 @@ script: cd ./android && ./gradlew build
 android:
   components:
   - build-tools-24.0.1
-  - android-23
+  - android-24
 
 deploy:
   - provider: releases
