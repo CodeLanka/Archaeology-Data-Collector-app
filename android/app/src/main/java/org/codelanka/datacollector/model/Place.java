@@ -7,11 +7,11 @@ package org.codelanka.datacollector.model;
 public class Place {
 
     public String idx;
-    public long lat;
-    public long lng;
+    public double lat;
+    public double lng;
     public String sitename;
 
-    public Place(String idx, long lat, long lng, String sitename) {
+    public Place(String idx, double lat, double lng, String sitename) {
         this.idx = idx;
         this.lat = lat;
         this.lng = lng;
