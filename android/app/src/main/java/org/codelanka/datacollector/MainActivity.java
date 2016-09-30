@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     protected final int PERMISSIONS_REQUEST_LOCATION = 1;
 
-    private TextView mTxtDisplayName;
+    private TextView mTxtDisplayName, mLocationData;
     private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
     private EditText mEditGnDivision, mEditNearestTown, mEditLatitude, mEditLongitude;
     private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mEditDescription = (EditText) findViewById(R.id.edit_description);
         mSpinnerCategory = (Spinner) findViewById(R.id.spinner_category);
         mBtnSubmit = (Button) findViewById(R.id.btn_submit);
+        mLocationData = (TextView) findViewById(R.id.txt_location);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -185,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             .title("My Location")
                             .snippet("My Current Location")
                             .position(currentLocation));
+
+        mLocationData.setText("Lat: " + Double.toString(mLastLocation.getLatitude()) + " Lng: " + Double.toString(mLastLocation.getLongitude()));
     }
 
     @Override
@@ -251,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         DatabaseReference mDataPlace = FirebaseDatabase.getInstance().getReference().child("places").push();
         mDataPlace.setValue(placeModel);
 
+        // User feedback
         Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
     }
 
