@@ -40,6 +40,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.codelanka.datacollector.model.Place;
 import org.codelanka.datacollector.model.Site;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -237,12 +238,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
          * Input validation
          */
 
-        Site dbModel = new Site(
+        // Site details
+        Site siteModel = new Site(
                 username, email, siteName, category, province, district, dsDivision, gnDivision,
-                nearestTown, lat, lng, nameOfOwner, nameOfUser, description
+                nearestTown, nameOfOwner, nameOfUser, description
         );
         DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference().push();
-        mDatabase.setValue(dbModel);
+        mDatabase.setValue(siteModel);
+
+        // Place child
+        Place placeModel = new Place(mDatabase.getKey(), lat, lng, siteName);
+        DatabaseReference mDataPlace = FirebaseDatabase.getInstance().getReference().child("places").push();
+        mDataPlace.setValue(placeModel);
 
         Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
     }
