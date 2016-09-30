@@ -1,9 +1,7 @@
 package org.codelanka.datacollector;
 
-import android.*;
 import android.Manifest;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
@@ -30,8 +28,6 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,6 +40,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.codelanka.datacollector.model.Site;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -240,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
          * Input validation
          */
 
-        DatabaseModel dbModel = new DatabaseModel(
+        Site dbModel = new Site(
                 username, email, siteName, category, province, district, dsDivision, gnDivision,
                 nearestTown, lat, lng, nameOfOwner, nameOfUser, description
         );
