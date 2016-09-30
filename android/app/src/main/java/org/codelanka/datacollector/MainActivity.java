@@ -1,9 +1,7 @@
 package org.codelanka.datacollector;
 
-import android.*;
 import android.Manifest;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
@@ -30,8 +28,6 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,6 +40,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.codelanka.datacollector.model.Place;
+import org.codelanka.datacollector.model.Site;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -51,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     protected final int PERMISSIONS_REQUEST_LOCATION = 1;
 
-    private TextView mTxtDisplayName;
+    private TextView mTxtDisplayName, mLocationData;
     private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
     private EditText mEditGnDivision, mEditNearestTown, mEditLatitude, mEditLongitude;
     private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
@@ -90,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mEditDescription = (EditText) findViewById(R.id.edit_description);
         mSpinnerCategory = (Spinner) findViewById(R.id.spinner_category);
         mBtnSubmit = (Button) findViewById(R.id.btn_submit);
+        mLocationData = (TextView) findViewById(R.id.txt_location);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -187,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             .title("My Location")
                             .snippet("My Current Location")
                             .position(currentLocation));
+
+        mLocationData.setText("Lat: " + Double.toString(mLastLocation.getLatitude()) + " Lng: " + Double.toString(mLastLocation.getLongitude()));
     }
 
     @Override
@@ -240,13 +241,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
          * Input validation
          */
 
-        DatabaseModel dbModel = new DatabaseModel(
+        // Site details
+        Site siteModel = new Site(
                 username, email, siteName, category, province, district, dsDivision, gnDivision,
-                nearestTown, lat, lng, nameOfOwner, nameOfUser, description
+                nearestTown, nameOfOwner, nameOfUser, description
         );
         DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference().push();
-        mDatabase.setValue(dbModel);
+        mDatabase.setValue(siteModel);
 
+        // Place child
+        Place placeModel = new Place(mDatabase.getKey(), lat, lng, siteName);
+        DatabaseReference mDataPlace = FirebaseDatabase.getInstance().getReference().child("places").push();
+        mDataPlace.setValue(placeModel);
+
+        // User feedback
         Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
     }
 
