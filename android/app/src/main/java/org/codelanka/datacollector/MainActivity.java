@@ -1,9 +1,18 @@
 package org.codelanka.datacollector;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.GpsStatus;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -24,8 +33,6 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -38,7 +45,24 @@ import com.google.firebase.auth.FirebaseUser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, View.OnClickListener, TextWatcher, OnMapReadyCallback {
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
+        GoogleApiClient.ConnectionCallbacks, View.OnClickListener, TextWatcher, OnMapReadyCallback,
+        LocationListener, GpsStatus.Listener {
+
+    public final String tag = MainActivity.class.getCanonicalName();
+
+    /** Used when Location Permissions are not granted. */
+    private final int PERMISSIONS_RESPONSE_CODE = 7591;
+
+    /** The time in milliseconds in which we want to update our position */
+    private final int milli_update = 5000; // 5 seconds
+
+    /** The distance we must travel in meters in which we want to update out position */
+    private final int meters_distance = 0; // 0 meter
 
     private TextView mTxtDisplayName;
     private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
@@ -49,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mMap;
     private String mDisplayName;
+    private LocationManager locationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +129,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinnerCategory.setAdapter(adapter);
 
+        initLocationServices();
+    }
+
+    private void initLocationServices() {
+
+        // Need check if we have permission to do this
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(tag, "ACCESS_FINE_LOCATION is not granted.");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_RESPONSE_CODE);
+            return;
+        }
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        locationManager.addGpsStatusListener(this);
+
+        // Set the Listener to update the location when we move
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, milli_update,
+                meters_distance, this);
+
+        // Disable the User from editing this as they should be updated automatically.
+        mEditLongitude.setEnabled(false);
+        mEditLatitude.setEnabled(false);
+        mEditNearestTown.setEnabled(false);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSIONS_RESPONSE_CODE) {
+
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Call initLocationServices again.
+                initLocationServices();
+            }
+
+        }
     }
 
     @Override
@@ -227,5 +291,102 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         Log.d("arch", "got a map");
+    }
+
+    /**
+     * Used to monitor the GPS Status.
+     *
+     * Currently just being used for LogCat.
+     *
+     * @param event The GPS Status event.
+     */
+    public void onGpsStatusChanged(int event) {
+
+        switch (event) {
+            case GpsStatus.GPS_EVENT_STARTED:
+                Log.i(tag, "GPS - Searching");
+                break;
+
+            case GpsStatus.GPS_EVENT_STOPPED:
+                Log.i(tag, "GPS - Stopped Searching");
+                break;
+
+            // Called when we get a satellite fix
+            case GpsStatus.GPS_EVENT_FIRST_FIX:
+                Log.i(tag, "GPS - Locked");
+
+                // Removing the GPS status listener once GPS is locked
+                locationManager.removeGpsStatusListener(this);
+
+                break;
+        }
+    }
+
+    /**
+     * Listener that updates whenever our location changes.
+     *
+     * Triggered by time or distance.
+     *
+     * @param location The new location object.
+     */
+    public void onLocationChanged(Location location) {
+        Log.i(tag, "Updating Location.");
+
+        if (location != null) {
+
+            if (location.getLongitude() != 0 || location.getLatitude() != 0) {
+
+                mEditLongitude.setText(Double.toString(location.getLongitude()));
+                mEditLatitude.setText(Double.toString(location.getLatitude()));
+
+                setCurrentCity(location.getLongitude(), location.getLatitude());
+
+            } else {
+                Log.d(tag, "GPS not receiving valid data");
+            }
+
+        } else {
+            Log.d(tag, "GPS not receiving valid data");
+        }
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
+    /**
+     * Sets the Current City.
+     */
+    public void setCurrentCity(Double longitude, Double latitude) {
+
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        List<Address> addresses;
+        try {
+
+            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+
+            if (addresses.size() > 0) {
+                Log.d(tag, "City: " + addresses.get(0).getLocality());
+                mEditNearestTown.setText(addresses.get(0).getLocality());
+                return;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // We couldn't find a city and need to enable the field again.
+        mEditNearestTown.setEnabled(true);
     }
 }
