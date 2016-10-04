@@ -2,8 +2,11 @@ package org.codelanka.datacollector;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -26,6 +29,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -70,21 +74,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mEditDsDivision = (EditText) findViewById(R.id.edit_ds_division);
         mEditGnDivision = (EditText) findViewById(R.id.edit_gn_division);
         mEditNearestTown = (EditText) findViewById(R.id.edit_nearest_town);
-        mEditLatitude = (EditText) findViewById(R.id.edit_latitude);
-        mEditLongitude = (EditText) findViewById(R.id.edit_longitude);
         mEditNameOfOwner = (EditText) findViewById(R.id.edit_name_of_owner);
         mEditNameOfUser = (EditText) findViewById(R.id.edit_name_of_user);
         mEditDescription = (EditText) findViewById(R.id.edit_description);
         mSpinnerCategory = (Spinner) findViewById(R.id.spinner_category);
         mBtnSubmit = (Button) findViewById(R.id.btn_submit);
 
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
         mapFragment.getMapAsync(this);
 
         mBtnSubmit.setOnClickListener(this);
-        mEditLatitude.addTextChangedListener(this);
-        mEditLongitude.addTextChangedListener(this);
 
         GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(
                 GoogleSignInOptions.DEFAULT_SIGN_IN
@@ -97,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .build();
 
         mTxtDisplayName.setText(mDisplayName);
+        mEditSiteName.addTextChangedListener(this);
 
         // populate spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -201,31 +204,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     @Override
     public void afterTextChanged(Editable s) {
-        if (mMap == null | mEditLatitude.getText() == null || mEditLongitude.getText() == null)
-            return;
-
-        // check if empty
-        if (TextUtils.isEmpty(mEditLatitude.getText()) || TextUtils.isEmpty(mEditLongitude.getText()))
-            return;
-
-        float latitude = Float.valueOf(mEditLatitude.getText().toString().trim());
-        float longitude = Float.valueOf(mEditLongitude.getText().toString().trim());
-        Log.d("arch", "latitude: " + latitude + " longitude: " + longitude);
-        // check range
-        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
-            return;
-
-        // show position on map
-        final LatLng position = new LatLng(latitude, longitude);
-        mMap.clear();
-        mMap.addMarker(new MarkerOptions().position(position));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(14  ));
+        displayCurrentLocation();
     }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         Log.d("arch", "got a map");
+    }
+
+    public void displayCurrentLocation(){
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
+            @Override
+            public void onMyLocationChange (Location location) {
+                LatLng loc = new LatLng (location.getLatitude(), location.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
+            }
+        };
+        mMap.setOnMyLocationChangeListener(myLocationChangeListener);
     }
 }
