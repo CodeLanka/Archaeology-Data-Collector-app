@@ -80,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mSpinnerCategory = (Spinner) findViewById(R.id.spinner_category);
         mBtnSubmit = (Button) findViewById(R.id.btn_submit);
 
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
