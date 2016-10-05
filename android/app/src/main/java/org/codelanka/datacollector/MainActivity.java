@@ -248,6 +248,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mDataPlace.setValue(placeModel);
 
         Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
+
+        // Reset the input fields
+        resetInputs();
     }
 
     @Override
@@ -259,6 +262,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
 
         getLastLocation();
+    }
+
+    /**
+     * Reset the input fields
+     */
+    private void resetInputs() {
+        mEditSiteName.setText(null);
+        mEditProvince.setText(null);
+        mEditDistrict.setText(null);
+        mEditDsDivision.setText(null);
+        mEditGnDivision.setText(null);
+        mEditNearestTown.setText(null);
+        mEditNameOfOwner.setText(null);
+        mEditNameOfUser.setText(null);
+        mEditDescription.setText(null);
     }
 
 }
