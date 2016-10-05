@@ -3,6 +3,8 @@ package org.codelanka.datacollector;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -44,6 +46,9 @@ import org.codelanka.datacollector.model.Place;
 import org.codelanka.datacollector.model.Site;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, View.OnClickListener, OnMapReadyCallback {
 
@@ -181,6 +186,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             .title("My Location")
                             .snippet("My Current Location")
                             .position(currentLocation));
+
+        // Set nearest city using lat, lng
+        try {
+            setNearestCity(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -277,6 +289,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mEditNameOfOwner.setText(null);
         mEditNameOfUser.setText(null);
         mEditDescription.setText(null);
+    }
+
+    /**
+     * Get the nearest city using lat, lng
+     */
+    private void setNearestCity(double lat, double lng) throws IOException {
+        Geocoder geocoder = new Geocoder(this);
+
+        List<Address> addrs = geocoder.getFromLocation(lat, lng, 1);
+        if (addrs.size() > 0) {
+            mEditNearestTown.setText(addrs.get(0).getLocality());
+        }
     }
 
 }
