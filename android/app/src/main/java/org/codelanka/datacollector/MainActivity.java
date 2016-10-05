@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     protected final int PERMISSIONS_REQUEST_LOCATION = 1;
 
-    private TextView mTxtDisplayName;
+    private TextView mTxtDisplayName, mTxtLatlng;
     private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
     private EditText mEditGnDivision, mEditNearestTown, mEditLatitude, mEditLongitude;
     private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mDisplayName = mUser.getDisplayName();
 
         mTxtDisplayName = (TextView) findViewById(R.id.txt_name);
+        mTxtLatlng = (TextView) findViewById(R.id.txt_latlng);
         mEditSiteName = (EditText) findViewById(R.id.edit_site_name);
         mEditProvince = (EditText) findViewById(R.id.edit_province);
         mEditDistrict = (EditText) findViewById(R.id.edit_district);
@@ -186,6 +187,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             .title("My Location")
                             .snippet("My Current Location")
                             .position(currentLocation));
+        // Set latlng in textview
+        mTxtLatlng.setText("Lat:" + String.valueOf(mLastLocation.getLatitude()) + " Lng:" + String.valueOf(mLastLocation.getLongitude()));
 
         // Set nearest city using lat, lng
         try {
