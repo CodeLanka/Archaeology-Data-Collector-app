@@ -3,6 +3,8 @@ package org.codelanka.datacollector;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -45,11 +47,14 @@ import org.codelanka.datacollector.model.Site;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, View.OnClickListener, TextWatcher, OnMapReadyCallback {
+import java.io.IOException;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, View.OnClickListener, OnMapReadyCallback {
 
     protected final int PERMISSIONS_REQUEST_LOCATION = 1;
 
-    private TextView mTxtDisplayName;
+    private TextView mTxtDisplayName, mTxtLatlng;
     private EditText mEditSiteName, mEditProvince, mEditDistrict, mEditDsDivision;
     private EditText mEditGnDivision, mEditNearestTown, mEditLatitude, mEditLongitude;
     private EditText mEditNameOfOwner, mEditNameOfUser, mEditDescription;
@@ -75,14 +80,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mDisplayName = mUser.getDisplayName();
 
         mTxtDisplayName = (TextView) findViewById(R.id.txt_name);
+        mTxtLatlng = (TextView) findViewById(R.id.txt_latlng);
         mEditSiteName = (EditText) findViewById(R.id.edit_site_name);
         mEditProvince = (EditText) findViewById(R.id.edit_province);
         mEditDistrict = (EditText) findViewById(R.id.edit_district);
         mEditDsDivision = (EditText) findViewById(R.id.edit_ds_division);
         mEditGnDivision = (EditText) findViewById(R.id.edit_gn_division);
         mEditNearestTown = (EditText) findViewById(R.id.edit_nearest_town);
-//        mEditLatitude = (EditText) findViewById(R.id.edit_latitude);
-//        mEditLongitude = (EditText) findViewById(R.id.edit_longitude);
         mEditNameOfOwner = (EditText) findViewById(R.id.edit_name_of_owner);
         mEditNameOfUser = (EditText) findViewById(R.id.edit_name_of_user);
         mEditDescription = (EditText) findViewById(R.id.edit_description);
@@ -94,8 +98,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mapFragment.getMapAsync(this);
 
         mBtnSubmit.setOnClickListener(this);
-//        mEditLatitude.addTextChangedListener(this);
-//        mEditLongitude.addTextChangedListener(this);
 
         GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(
                 GoogleSignInOptions.DEFAULT_SIGN_IN
@@ -185,6 +187,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             .title("My Location")
                             .snippet("My Current Location")
                             .position(currentLocation));
+        // Set latlng in textview
+        mTxtLatlng.setText("Lat:" + String.valueOf(mLastLocation.getLatitude()) + " Lng:" + String.valueOf(mLastLocation.getLongitude()));
+
+        // Set nearest city using lat, lng
+        try {
+            setNearestCity(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -252,59 +263,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mDataPlace.setValue(placeModel);
 
         Toast.makeText(this, "New data written successfully", Toast.LENGTH_LONG).show();
-    }
 
-    private JSONObject getJSONObject() throws JSONException {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("display_name", mTxtDisplayName.getText().toString().trim());
-        jsonObject.put("site_name", mEditSiteName.getText().toString().trim());
-        jsonObject.put("category", mSpinnerCategory.getSelectedItem().toString().trim());
-        jsonObject.put("province", mEditProvince.getText().toString().trim());
-        jsonObject.put("district", mEditDistrict.getText().toString().trim());
-        jsonObject.put("ds_division", mEditDsDivision.getText().toString().trim());
-        jsonObject.put("gn_division", mEditGnDivision.getText().toString().trim());
-        jsonObject.put("nearest_town", mEditNearestTown.getText().toString().trim());
-        jsonObject.put("latitude", mEditLatitude.getText().toString().trim());
-        jsonObject.put("longitude", mEditLongitude.getText().toString().trim());
-        jsonObject.put("name_of_owner", mEditNameOfOwner.getText().toString().trim());
-        jsonObject.put("name_of_user", mEditNameOfUser.getText().toString().trim());
-        jsonObject.put("description", mEditDescription.getText().toString().trim());
-
-        return jsonObject;
-    }
-
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-    }
-
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-    }
-
-    @Override
-    public void afterTextChanged(Editable s) {
-        if (mMap == null | mEditLatitude.getText() == null || mEditLongitude.getText() == null)
-            return;
-
-        // check if empty
-        if (TextUtils.isEmpty(mEditLatitude.getText()) || TextUtils.isEmpty(mEditLongitude.getText()))
-            return;
-
-        float latitude = Float.valueOf(mEditLatitude.getText().toString().trim());
-        float longitude = Float.valueOf(mEditLongitude.getText().toString().trim());
-        Log.d("arch", "latitude: " + latitude + " longitude: " + longitude);
-        // check range
-        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
-            return;
-
-        // show position on map
-        final LatLng position = new LatLng(latitude, longitude);
-        mMap.clear();
-        mMap.addMarker(new MarkerOptions().position(position));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(14));
+        // Reset the input fields
+        resetInputs();
     }
 
     @Override
@@ -316,6 +277,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
 
         getLastLocation();
+    }
+
+    /**
+     * Reset the input fields
+     */
+    private void resetInputs() {
+        mEditSiteName.setText(null);
+        mEditProvince.setText(null);
+        mEditDistrict.setText(null);
+        mEditDsDivision.setText(null);
+        mEditGnDivision.setText(null);
+        mEditNearestTown.setText(null);
+        mEditNameOfOwner.setText(null);
+        mEditNameOfUser.setText(null);
+        mEditDescription.setText(null);
+    }
+
+    /**
+     * Get the nearest city using lat, lng
+     */
+    private void setNearestCity(double lat, double lng) throws IOException {
+        Geocoder geocoder = new Geocoder(this);
+
+        List<Address> addrs = geocoder.getFromLocation(lat, lng, 1);
+        if (addrs.size() > 0) {
+            mEditNearestTown.setText(addrs.get(0).getLocality());
+        }
     }
 
 }
